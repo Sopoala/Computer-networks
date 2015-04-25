@@ -48,7 +48,6 @@ public class TCPClientNIO {
 					// test connectivity
 					if (key.isConnectable()) {
 						SocketChannel sc = (SocketChannel) key.channel();
-//						sc.configureBlocking(true);
 						// set register status to WRITE
 						sc.register(selector, SelectionKey.OP_WRITE);
 						sc.finishConnect();

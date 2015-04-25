@@ -29,7 +29,7 @@ public class TCPClient {
         
         try {
             // Connect to the process listening on port 9000 on this host (localhost)
-            clientSocket = new Socket("127.0.0.1", 9001);
+            clientSocket = new Socket("127.0.0.1", 9000);
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             // "true" means flush at end of line
             in = new BufferedReader(

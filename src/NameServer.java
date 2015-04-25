@@ -38,7 +38,7 @@ public class NameServer {
 				// block, waiting for a connection request
 				connSocket = serverSocket.accept();
 				// At this point we already have had a connection
-				System.out.println("Connection accepted from: " + connSocket.getInetAddress().getHostName());
+				System.out.println("Connection accepted from: " + connSocket.getInetAddress().getHostName() + ":" + connSocket.getPort());
 			} catch (IOException e) {
 		    	e.printStackTrace();
 		    }
@@ -58,8 +58,13 @@ public class NameServer {
 		    		String port = incomingMsg[2];
 		    		String ipAddr = incomingMsg[3];
 		    		//save server info 
-		    		registerServers.put(serverName, port +" ; "+ipAddr);
-		    	}
+		    		try{
+						String put = registerServers.put(serverName, port + " ; " + ipAddr);
+					} catch (Exception e){
+						out.println("error");
+					}
+
+				}
 		    	else if(incomingMsg[0].equals("L"))
 		    	{
 		    		String serverName = incomingMsg[1];
