@@ -21,12 +21,16 @@ public class Client {
     private String ipAddr = "127.0.0.1";
     private PrintWriter out = null;
     private BufferedReader in = null;
-    int request = 0;
+    int storePort = 0;
+    boolean storeKnown = false;
     public Client(int request, int nameServerPort){
-        // send look up request message
-        // Look up for Bank server
-        String storeAddr = contactServer("L;Store", ipAddr, nameServerPort);
-        int storePort = Integer.parseInt(storeAddr.split(";")[0].trim());
+        // if the store server is unknown, send look up request message
+        if(!storeKnown){
+            // Look up for Bank server
+            String storeAddr = contactServer("L;Store", ipAddr, nameServerPort);
+            storePort = Integer.parseInt(storeAddr.split(";")[0].trim());
+            storeKnown = true;
+        }
         // connect to store server
         String result = contactServer(String.valueOf(request),ipAddr,storePort);
         System.out.println(result);
@@ -117,17 +121,21 @@ public class Client {
     }
     public static void main(String[] args) throws IOException, NumberFormatException{
         System.out.println("Please enter your request and the name server port");
-        BufferedReader stdin = new BufferedReader(
-                new InputStreamReader(System.in));
-        String userInput = stdin.readLine();
-        String input[] = userInput.split(" ");
-        try{
-            int request = Integer.parseInt(input[0]);
-            int nameServerPort = Integer.parseInt(input[1]);
-            new Client(request, nameServerPort);
-        } catch(NumberFormatException e){
-            System.err.println("Invalid command line arguments\n");
-            System.exit(1);
+        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+        String userInput;
+        while((userInput = stdin.readLine()) != null){
+            String input[] = userInput.split(" ");
+            try{
+                int request = Integer.parseInt(input[0]);
+                int nameServerPort = Integer.parseInt(input[1]);
+                new Client(request, nameServerPort);
+//                userInput = stdin.readLine();
+                System.out.println("\nPlease enter your request and the name server port");
+            } catch(NumberFormatException e){
+                System.err.println("Invalid command line arguments\n");
+                System.exit(1);
+            }
         }
+
     }
 }

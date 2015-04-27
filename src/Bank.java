@@ -11,10 +11,7 @@ public class Bank {
     private Selector selector = null;
     private ServerSocketChannel serverSocketChannel = null;
     private ServerSocket serverSocket = null;
-    private Socket connSocket = null;
     private String ipAddr = "127.0.0.1";
-    private PrintWriter out = null;
-    private BufferedReader in = null;
     private long itemID = 0;
     public Bank(int bankPort, int nameServerPort) throws IOException{
         if (bankPort < 0 || bankPort > 65533 || nameServerPort < 0 || nameServerPort > 65533){
@@ -181,12 +178,14 @@ public class Bank {
                         }
                         // react by Client's message
                         if (readBytes > 0) {
-                            //System.out.println("Message from Client" + sc.getRemoteAddress() + ": " + message);
-                            // if exit, close socket channel
-                            if(itemID%2 == 0 ){
+                            // check the item ID to make the decision whether the transaction is successful
+                            // if the itemID is even, return
+                            if(itemID%2 == 1 ){
                                 sc.register(key.selector(), SelectionKey.OP_WRITE, "1");
+                                System.out.println(itemID + " OK");
                             } else {
                                 sc.register(key.selector(), SelectionKey.OP_WRITE, "0");
+                                System.out.println(itemID + " NOT OK");
                             }
                         }
                     }
@@ -228,11 +227,16 @@ public class Bank {
                 new InputStreamReader(System.in));
         String userInput = stdin.readLine();
         String input[] = userInput.split(" ");
-        try{
-            int bankPort = Integer.parseInt(input[0]);
-            int nameServerPort = Integer.parseInt(input[1]);
-            new Bank(bankPort, nameServerPort);
-        } catch(NumberFormatException e){
+        if(input.length ==2) {
+            try {
+                int bankPort = Integer.parseInt(input[0]);
+                int nameServerPort = Integer.parseInt(input[1]);
+                new Bank(bankPort, nameServerPort);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid command line arguments");
+                System.exit(1);
+            }
+        } else {
             System.err.println("Invalid command line arguments");
             System.exit(1);
         }

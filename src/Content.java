@@ -14,12 +14,9 @@ public class Content {
     private Selector selector = null;
     private ServerSocketChannel serverSocketChannel = null;
     private ServerSocket serverSocket = null;
-    private Socket connSocket = null;
     private String ipAddr = "127.0.0.1";
-    private PrintWriter out = null;
-    private BufferedReader in = null;
     private String itemID = null;
-    private Map<String,String> contents = new HashMap<String,String>();
+    private Map<String,String> contents = new HashMap<>();
     public Content(int contentPort, String fileName, int nameServerPort)throws IOException, NumberFormatException{
         if (contentPort < 0 || contentPort > 65533 || nameServerPort < 0 || nameServerPort > 65533){
             System.err.println("Invalid command line arguments for Content Server");
@@ -104,7 +101,7 @@ public class Content {
                             // if exit, close socket channel
                                 String result = null;
                                 String success = "The transaction is successful!\nThe item you purchased is: ";
-                                try{result = success + contents.get(itemID);}
+                                try{result = success + itemID + " " + contents.get(itemID);}
                                 catch (Exception e){
                                     System.err.println("Error");
                                     result = "Error";
@@ -252,21 +249,27 @@ public class Content {
         }
     }
     public static void main(String[] args) throws IOException, NumberFormatException {
-        System.out.println("Please specify content server port number, stock file name and name server port number\nIN THE FORMAT\nContent Server Port number (SPACE) Stock-file name (SPACE) Name Server port number:");
+        System.out.println("Please specify content server port number, stock file name and name server port number\nIN THE FORMAT\nContent Server Port number (SPACE) Content-file name (SPACE) Name Server port number:");
         BufferedReader stdin = new BufferedReader(
                 new InputStreamReader(System.in));
         String userInput = stdin.readLine();
         String input[] = userInput.split(" ");
-        try {
-            int contentPort = Integer.parseInt(input[0]);
-            String contentFile = input[1];
-            int nameServerPort = Integer.parseInt(input[2]);
-            new Content(contentPort, contentFile, nameServerPort);
-        } catch (NumberFormatException e) {
+        // check if the arguments number is right
+        if(input.length==3) {
+            try {
+                int contentPort = Integer.parseInt(input[0]);
+                String contentFile = input[1];
+                int nameServerPort = Integer.parseInt(input[2]);
+                new Content(contentPort, contentFile, nameServerPort);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid command line arguments");
+                System.exit(1);
+            } catch (FileNotFoundException e) {
+                System.err.println("File Not Found!");
+                System.exit(1);
+            }
+        } else{
             System.err.println("Invalid command line arguments");
-            System.exit(1);
-        } catch (FileNotFoundException e) {
-            System.err.println("File Not Found!");
             System.exit(1);
         }
     }

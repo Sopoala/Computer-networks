@@ -55,21 +55,19 @@ public class Store {
             selector = Selector.open();
             // opening a channel
             serverSocketChannel = ServerSocketChannel.open();
-
             // saving the socket associated with the channel
             socket = serverSocketChannel.socket();
             // setting the blocking type to false so that it doesnt crash when
             // set Blocking mode to non-blocking
             SelectableChannel selectableChannel = serverSocketChannel.configureBlocking(false);
-            // multiple clients connect
-           // serverSocketChannel.configureBlocking(false);
-
             try {
                 // binding the socket with the port at which we want to listen
                 socket.bind(new InetSocketAddress(storePort));
                 serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
                 System.out.println("Store server waiting for incoming connections on port "+storePort+"\n");
-            } catch (Exception e) {
+            }
+            // catch the exception when the port is used
+            catch (BindException e) {
                 System.err.print("Store server unable to listen on given port\n");
                 System.exit(1);
             }
@@ -109,16 +107,17 @@ public class Store {
                             // check for the message validity on the server side
                             // and act accordingly
                             if (message.equals("0")) {
+                                reply ="";
                                 for(int i = 0; i < stocksAL.size(); i++){
                                     reply += stocksAL.get(i) + "\n";
                                 }
                             } else {
-                                String itemID = stocksAL.get(Integer.parseInt(message)).split(" ")[0];
+                                String itemID = stocksAL.get((Integer.parseInt(message)) - 1).split(" ")[0];
                                 double itemPrice = Double.parseDouble(stocksAL.get(Integer.parseInt(message)).split(" ")[1]);
                                 String creditCard = "1234567890123456";
                                 storeMsgSend =itemID +" " + itemPrice + creditCard;
                                 String bankReply = contactServer(storeMsgSend,ipAddr,bankPort);
-                                if(bankReply.equals("1")){
+                                if(bankReply.equals("0")){
                                     reply = "Transaction aborted\n";
                                 } else {
                                     try{
@@ -141,9 +140,6 @@ public class Store {
                         sc.write(buffer);
                         // set register status to READ
                         sc.register(key.selector(), SelectionKey.OP_READ, buffer);
-//                        sc.close();
-//                        System.err.print("Store Server connection closed\n");
-                        //System.err.print("Store Server waiting for incoming connections\n");
                     }
 
                 }
@@ -275,15 +271,20 @@ public class Store {
                 new InputStreamReader(System.in));
         String userInput = stdin.readLine();
         String input[] = userInput.split(" ");
-        try {
-            int storePort = Integer.parseInt(input[0]);
-            String stockfile = input[1];
-            int nameServerPort = Integer.parseInt(input[2]);
-            new Store(storePort, stockfile, nameServerPort);
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid command line arguments");
-            System.exit(1);
-        } catch (FileNotFoundException e) {
+        if(input.length ==3) {
+            try {
+                int storePort = Integer.parseInt(input[0]);
+                String stockfile = input[1];
+                int nameServerPort = Integer.parseInt(input[2]);
+                new Store(storePort, stockfile, nameServerPort);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid command line arguments");
+                System.exit(1);
+            } catch (FileNotFoundException e) {
+                System.err.println("File Not Found!");
+                System.exit(1);
+            }
+        } else {
             System.err.println("File Not Found!");
             System.exit(1);
         }
