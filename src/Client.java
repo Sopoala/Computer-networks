@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -31,7 +28,9 @@ public class Client {
         String storeAddr = contactServer("L;Store", ipAddr, nameServerPort);
         int storePort = Integer.parseInt(storeAddr.split(";")[0].trim());
         // connect to store server
-        contactServer(String.valueOf(request),ipAddr,storePort);
+        String result = contactServer(String.valueOf(request),ipAddr,storePort);
+        System.out.println(result);
+
     }
     private String contactServer(String msg, String ipAddr, int serverPort) {
         SocketChannel channel = null;
@@ -47,7 +46,8 @@ public class Client {
             // connect to Server
             channel.connect(target);
             // registers this channel with the given selector, returning a selection key
-            channel.register(selector, SelectionKey.OP_CONNECT);while (selector.select() > 0) {
+            channel.register(selector, SelectionKey.OP_CONNECT);
+            while (selector.select() > 0) {
                 for (SelectionKey key : selector.selectedKeys()) {
                     // test connectivity
                     if (key.isConnectable()) {

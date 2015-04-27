@@ -6,28 +6,20 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.util.*;
 
 
 public class Store {
-    private ServerSocket serverSocket = null;
-    private PrintWriter out = null;
-    private BufferedReader in = null;
-    private Socket connSocket = null;
-    private int nameServerPort;
     private int storePort, bankPort, contentPort;
     private String ipAddr = "127.0.0.1";
     private Map<String, String> stocks = new LinkedHashMap<String, String>();
     private ArrayList<String> stocksAL = new ArrayList<>();
     private Selector selector = null;
-    private SocketChannel channelBank = null;
-    private SocketChannel channelContent = null;
     private String storeMsgSend = null;
+    private ServerSocketChannel serverSocketChannel = null;
+    private ServerSocket socket = null;
 
     public Store(int storePort, String fileName, int nameServerPort) throws IOException, NumberFormatException {
         if (storePort < 0 || storePort > 65533 || nameServerPort < 0 || nameServerPort > 65533) {
@@ -57,11 +49,7 @@ public class Store {
     }
 
 
-    public void startListening(int listeningPort) {
-
-        Selector selector = null;
-        ServerSocketChannel serverSocketChannel = null;
-        ServerSocket socket = null;
+    public void startListening(int storePort) {
         try {
             // opening a selector
             selector = Selector.open();
@@ -71,23 +59,27 @@ public class Store {
             // saving the socket associated with the channel
             socket = serverSocketChannel.socket();
             // setting the blocking type to false so that it doesnt crash when
+            // set Blocking mode to non-blocking
+            SelectableChannel selectableChannel = serverSocketChannel.configureBlocking(false);
             // multiple clients connect
-            serverSocketChannel.configureBlocking(false);
+           // serverSocketChannel.configureBlocking(false);
 
             try {
                 // binding the socket with the port at which we want to listen
                 socket.bind(new InetSocketAddress(storePort));
                 serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+                System.out.println("Store server waiting for incoming connections on port "+storePort+"\n");
             } catch (Exception e) {
                 System.err.print("Store server unable to listen on given port\n");
                 System.exit(1);
             }
-            System.out.println("Store server waiting for incoming connections\n");
+
             while (selector.select() > 0) {
                 for (SelectionKey key : selector.selectedKeys()) {
                     if (key.isAcceptable()) {
                         ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
                         SocketChannel socketChannel = serverChannel.accept();
+                        System.out.println("Connection accepted from: " + socketChannel.getRemoteAddress());
                         if (socketChannel == null) {
                             continue;
                         }
@@ -118,7 +110,7 @@ public class Store {
                             // and act accordingly
                             if (message.equals("0")) {
                                 for(int i = 0; i < stocksAL.size(); i++){
-                                    reply = stocksAL.get(i) + "\n";
+                                    reply += stocksAL.get(i) + "\n";
                                 }
                             } else {
                                 String itemID = stocksAL.get(Integer.parseInt(message)).split(" ")[0];
@@ -130,7 +122,7 @@ public class Store {
                                     reply = "Transaction aborted\n";
                                 } else {
                                     try{
-                                        reply = contactServer(itemID,ipAddr,bankPort);
+                                        reply = contactServer(itemID,ipAddr,contentPort);
                                     } catch (Exception e){
                                         reply = "Transaction Aborted\n";
                                     }
@@ -148,8 +140,9 @@ public class Store {
                         buffer.flip();
                         sc.write(buffer);
                         // set register status to READ
-                        sc.close();
-                        System.err.print("Store Server connection closed\n");
+                        sc.register(key.selector(), SelectionKey.OP_READ, buffer);
+//                        sc.close();
+//                        System.err.print("Store Server connection closed\n");
                         //System.err.print("Store Server waiting for incoming connections\n");
                     }
 
@@ -277,7 +270,7 @@ public class Store {
     }
 
     public static void main(String[] args) throws IOException, NumberFormatException {
-        System.out.println("Please specify store server port number, stock file name and name server port number\nIN THE FORMAT\n'Store Server Port number|Stock-file name|Name Server port number':");
+        System.out.println("Please specify store server port number, stock file name and name server port number\nIN THE FORMAT\nStore Server Port number (SPACE) Stock-file name (SPACE) Name Server port number':");
         BufferedReader stdin = new BufferedReader(
                 new InputStreamReader(System.in));
         String userInput = stdin.readLine();

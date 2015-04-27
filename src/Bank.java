@@ -15,7 +15,7 @@ public class Bank {
     private String ipAddr = "127.0.0.1";
     private PrintWriter out = null;
     private BufferedReader in = null;
-    private int itemID = 0;
+    private long itemID = 0;
     public Bank(int bankPort, int nameServerPort) throws IOException{
         if (bankPort < 0 || bankPort > 65533 || nameServerPort < 0 || nameServerPort > 65533){
             System.err.println("Invalid command line arguments for Bank Server");
@@ -123,11 +123,15 @@ public class Bank {
             serverSocket = serverSocketChannel.socket();
             // set Blocking mode to non-blocking
             SelectableChannel selectableChannel = serverSocketChannel.configureBlocking(false);
-            // bind port
-            serverSocket.bind(new InetSocketAddress(bankPort));
-            // registers this channel with the given selector, returning a selection key
-            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-            System.out.println("Bank is waiting for incoming connections, listening on port: "+ bankPort);
+            try{
+                // bind port
+                serverSocket.bind(new InetSocketAddress(bankPort));
+                // registers this channel with the given selector, returning a selection key
+                serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+                System.out.println("Bank is waiting for incoming connections, listening on port: "+ bankPort);
+            }catch (BindException e){
+                System.err.println("Cannot listen on the given port" + bankPort);
+            }
             while (selector.select() > 0) {
                 for (SelectionKey key : selector.selectedKeys()) {
                     // test whether this key's channel is ready to accept a new socket connection
@@ -167,7 +171,8 @@ public class Bank {
                             if (readBytes > 0) {
                                 message = Charset.forName("UTF-8").decode(buffer).toString();
                                 String[] splitMsg = message.split(" ");
-                                itemID = Integer.parseInt(splitMsg[0]);
+                                //itemID = Integer.parseInt(splitMsg[0].trim());
+                                itemID = Long.parseLong(splitMsg[0].trim());
                                 buffer = null;
                             }
                         } finally {

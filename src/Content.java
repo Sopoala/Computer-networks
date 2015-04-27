@@ -1,8 +1,5 @@
 import java.io.*;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
@@ -21,7 +18,7 @@ public class Content {
     private String ipAddr = "127.0.0.1";
     private PrintWriter out = null;
     private BufferedReader in = null;
-    private int itemID = 0;
+    private String itemID = null;
     private Map<String,String> contents = new HashMap<String,String>();
     public Content(int contentPort, String fileName, int nameServerPort)throws IOException, NumberFormatException{
         if (contentPort < 0 || contentPort > 65533 || nameServerPort < 0 || nameServerPort > 65533){
@@ -47,11 +44,15 @@ public class Content {
             serverSocket = serverSocketChannel.socket();
             // set Blocking mode to non-blocking
             SelectableChannel selectableChannel = serverSocketChannel.configureBlocking(false);
-            // bind port
-            serverSocket.bind(new InetSocketAddress(contentPort));
-            // registers this channel with the given selector, returning a selection key
-            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-            System.out.println("Content server is waiting for incoming connections, listening on port: "+ contentPort);
+            try {
+                // bind port
+                serverSocket.bind(new InetSocketAddress(contentPort));
+                // registers this channel with the given selector, returning a selection key
+                serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+                System.out.println("Content server is waiting for incoming connections, listening on port: " + contentPort);
+            }catch (BindException e){
+                System.err.println("Cannot listen on the given port" + contentPort);
+            }
             while (selector.select() > 0) {
                 for (SelectionKey key : selector.selectedKeys()) {
                     // test whether this key's channel is ready to accept a new socket connection
@@ -89,8 +90,9 @@ public class Content {
                             }
                             // finished reading, form message
                             if (readBytes > 0) {
-                                message = Charset.forName("UTF-8").decode(buffer).toString();
-                                itemID = Integer.parseInt(message);
+                                itemID = Charset.forName("UTF-8").decode(buffer).toString();
+                                //itemID = Integer.parseInt(message);
+                                buffer = null;
                             }
                         } finally {
                             if (buffer != null)
@@ -100,15 +102,15 @@ public class Content {
                         if (readBytes > 0) {
                             //System.out.println("Message from Client" + sc.getRemoteAddress() + ": " + message);
                             // if exit, close socket channel
-                            if(itemID == 0){
                                 String result = null;
-                                try{result = contents.get(itemID);}
+                                String success = "The transaction is successful!\nThe item you purchased is: ";
+                                try{result = success + contents.get(itemID);}
                                 catch (Exception e){
                                     System.err.println("Error");
                                     result = "Error";
                                 }
                                 sc.register(key.selector(), SelectionKey.OP_WRITE, result);
-                            }
+
                         }
                     }
                     // test whether this key's channel is ready for sending to Client
@@ -250,7 +252,7 @@ public class Content {
         }
     }
     public static void main(String[] args) throws IOException, NumberFormatException {
-        System.out.println("Please specify content server port number, stock file name and name server port number\nIN THE FORMAT\n'Content Server Port number|Stock-file name|Name Server port number':");
+        System.out.println("Please specify content server port number, stock file name and name server port number\nIN THE FORMAT\nContent Server Port number (SPACE) Stock-file name (SPACE) Name Server port number:");
         BufferedReader stdin = new BufferedReader(
                 new InputStreamReader(System.in));
         String userInput = stdin.readLine();
