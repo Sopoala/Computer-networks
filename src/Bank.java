@@ -222,24 +222,36 @@ public class Bank {
         }
     }
     public static void main(String[] args) throws IOException, NumberFormatException{
-        System.out.println("Please specify bank server port and name server port it will connect to, using space");
-        BufferedReader stdin = new BufferedReader(
-                new InputStreamReader(System.in));
-        String userInput = stdin.readLine();
-        String input[] = userInput.split(" ");
-        if(input.length ==2) {
-            try {
-                int bankPort = Integer.parseInt(input[0]);
-                int nameServerPort = Integer.parseInt(input[1]);
-                new Bank(bankPort, nameServerPort);
-            } catch (NumberFormatException e) {
-                System.err.println("Invalid command line arguments");
-                System.exit(1);
-            }
-        } else {
+        if(args.length!=2){
             System.err.println("Invalid command line arguments");
             System.exit(1);
         }
+        try{
+            int bankPort = Integer.parseInt(args[0]);
+            int nameServerPort = Integer.parseInt(args[1]);
+            new Bank(bankPort,nameServerPort);
+        } catch(NumberFormatException e){
+            System.err.println("Invalid command line arguments");
+            System.exit(1);
+        }
+//        System.out.println("Please specify bank server port and name server port it will connect to, using space");
+//        BufferedReader stdin = new BufferedReader(
+//                new InputStreamReader(System.in));
+//        String userInput = stdin.readLine();
+//        String input[] = userInput.split(" ");
+//        if(input.length ==2) {
+//            try {
+//                int bankPort = Integer.parseInt(input[0]);
+//                int nameServerPort = Integer.parseInt(input[1]);
+//                new Bank(bankPort, nameServerPort);
+//            } catch (NumberFormatException e) {
+//                System.err.println("Invalid command line arguments");
+//                System.exit(1);
+//            }
+//        } else {
+//            System.err.println("Invalid command line arguments");
+//            System.exit(1);
+//        }
     }
 
 }

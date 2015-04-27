@@ -2,8 +2,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
@@ -113,7 +111,7 @@ public class Store {
                                 }
                             } else {
                                 String itemID = stocksAL.get((Integer.parseInt(message)) - 1).split(" ")[0];
-                                double itemPrice = Double.parseDouble(stocksAL.get(Integer.parseInt(message)).split(" ")[1]);
+                                double itemPrice = Double.parseDouble(stocksAL.get((Integer.parseInt(message)) - 1).split(" ")[1]);
                                 String creditCard = "1234567890123456";
                                 storeMsgSend =itemID +" " + itemPrice + creditCard;
                                 String bankReply = contactServer(storeMsgSend,ipAddr,bankPort);
@@ -266,28 +264,44 @@ public class Store {
     }
 
     public static void main(String[] args) throws IOException, NumberFormatException {
-        System.out.println("Please specify store server port number, stock file name and name server port number\nIN THE FORMAT\nStore Server Port number (SPACE) Stock-file name (SPACE) Name Server port number':");
-        BufferedReader stdin = new BufferedReader(
-                new InputStreamReader(System.in));
-        String userInput = stdin.readLine();
-        String input[] = userInput.split(" ");
-        if(input.length ==3) {
-            try {
-                int storePort = Integer.parseInt(input[0]);
-                String stockfile = input[1];
-                int nameServerPort = Integer.parseInt(input[2]);
-                new Store(storePort, stockfile, nameServerPort);
-            } catch (NumberFormatException e) {
-                System.err.println("Invalid command line arguments");
-                System.exit(1);
-            } catch (FileNotFoundException e) {
-                System.err.println("File Not Found!");
-                System.exit(1);
-            }
-        } else {
+        if(args.length!=3){
+            System.err.println("Invalid command line arguments");
+            System.exit(1);
+        }
+        try{
+            int storePort = Integer.parseInt(args[0]);
+            String fileName = args[1];
+            int nameServerPort = Integer.parseInt(args[2]);
+            new Store(storePort,fileName,nameServerPort);
+        } catch(NumberFormatException e){
+            System.err.println("Invalid command line arguments");
+            System.exit(1);
+        }catch (FileNotFoundException e) {
             System.err.println("File Not Found!");
             System.exit(1);
         }
+//        System.out.println("Please specify store server port number, stock file name and name server port number\nIN THE FORMAT\nStore Server Port number (SPACE) Stock-file name (SPACE) Name Server port number':");
+//        BufferedReader stdin = new BufferedReader(
+//                new InputStreamReader(System.in));
+//        String userInput = stdin.readLine();
+//        String input[] = userInput.split(" ");
+//        if(input.length ==3) {
+//            try {
+//                int storePort = Integer.parseInt(input[0]);
+//                String stockfile = input[1];
+//                int nameServerPort = Integer.parseInt(input[2]);
+//                new Store(storePort, stockfile, nameServerPort);
+//            } catch (NumberFormatException e) {
+//                System.err.println("Invalid command line arguments");
+//                System.exit(1);
+//            } catch (FileNotFoundException e) {
+//                System.err.println("File Not Found!");
+//                System.exit(1);
+//            }
+//        } else {
+//            System.err.println("File Not Found!");
+//            System.exit(1);
+//        }
     }
 
 }

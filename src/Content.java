@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -249,29 +248,45 @@ public class Content {
         }
     }
     public static void main(String[] args) throws IOException, NumberFormatException {
-        System.out.println("Please specify content server port number, stock file name and name server port number\nIN THE FORMAT\nContent Server Port number (SPACE) Content-file name (SPACE) Name Server port number:");
-        BufferedReader stdin = new BufferedReader(
-                new InputStreamReader(System.in));
-        String userInput = stdin.readLine();
-        String input[] = userInput.split(" ");
-        // check if the arguments number is right
-        if(input.length==3) {
-            try {
-                int contentPort = Integer.parseInt(input[0]);
-                String contentFile = input[1];
-                int nameServerPort = Integer.parseInt(input[2]);
-                new Content(contentPort, contentFile, nameServerPort);
-            } catch (NumberFormatException e) {
-                System.err.println("Invalid command line arguments");
-                System.exit(1);
-            } catch (FileNotFoundException e) {
-                System.err.println("File Not Found!");
-                System.exit(1);
-            }
-        } else{
+        if(args.length!=3){
             System.err.println("Invalid command line arguments");
             System.exit(1);
         }
+        try{
+            int contentPort = Integer.parseInt(args[0]);
+            String fileName = args[1];
+            int nameServerPort = Integer.parseInt(args[2]);
+            new Content(contentPort,fileName,nameServerPort);
+        } catch(NumberFormatException e){
+            System.err.println("Invalid command line arguments");
+            System.exit(1);
+        }catch (FileNotFoundException e) {
+                System.err.println("File Not Found!");
+                System.exit(1);
+        }
+//        System.out.println("Please specify content server port number, stock file name and name server port number\nIN THE FORMAT\nContent Server Port number (SPACE) Content-file name (SPACE) Name Server port number:");
+//        BufferedReader stdin = new BufferedReader(
+//                new InputStreamReader(System.in));
+//        String userInput = stdin.readLine();
+//        String input[] = userInput.split(" ");
+//        // check if the arguments number is right
+//        if(input.length==3) {
+//            try {
+//                int contentPort = Integer.parseInt(input[0]);
+//                String contentFile = input[1];
+//                int nameServerPort = Integer.parseInt(input[2]);
+//                new Content(contentPort, contentFile, nameServerPort);
+//            } catch (NumberFormatException e) {
+//                System.err.println("Invalid command line arguments");
+//                System.exit(1);
+//            } catch (FileNotFoundException e) {
+//                System.err.println("File Not Found!");
+//                System.exit(1);
+//            }
+//        } else{
+//            System.err.println("Invalid command line arguments");
+//            System.exit(1);
+//        }
     }
 
 }

@@ -1,6 +1,4 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -165,18 +163,29 @@ public class NameServer {
     }
 
     public static void main(String[] args)  throws IOException {
-        System.out.println("Please specify a port no for Name Server to listen:");
-        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
-        // read user input
-        String userInput = stdin.readLine();
-        try{
-            // cast the user input to integer as the server port
-            int portNumber = Integer.parseInt(userInput);
-            new NameServer(portNumber);
-        }
-        catch(NumberFormatException e){
+        if(args.length!=1){
             System.err.println("Invalid command line arguments");
             System.exit(1);
         }
+        try{
+            int portNumber = Integer.parseInt(args[0]);
+            new NameServer(portNumber);
+        } catch(NumberFormatException e){
+            System.err.println("Invalid command line arguments");
+            System.exit(1);
+        }
+//        System.out.println("Please specify a port no for Name Server to listen:");
+//        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+//        // read user input
+//        String userInput = stdin.readLine();
+//        try{
+//            // cast the user input to integer as the server port
+//            int portNumber = Integer.parseInt(userInput);
+//            new NameServer(portNumber);
+//        }
+//        catch(NumberFormatException e){
+//            System.err.println("Invalid command line arguments");
+//            System.exit(1);
+//        }
     }
 }
