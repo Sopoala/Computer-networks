@@ -90,6 +90,7 @@ public class TCPClientNIO {
 						// input is not empty
 						while ((command = systemIn.readLine()).trim().isEmpty()) {
 						}
+
 						// send to Server
 						channel.write(Charset.forName("UTF-8").encode(command));
 						// set register status to READ

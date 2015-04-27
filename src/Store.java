@@ -34,30 +34,26 @@ public class Store {
             System.err.println("Invalid command line argument for Name Server");
             System.exit(1);
         }
-        // try to connect to the name server
-        connectToServer(ipAddr, nameServerPort);
-
-        // register with name server
-        try {
-            out.println("R;Store;" + storePort + ";" + ipAddr);
-        } catch (Exception e) {
-            System.err.println("Registration with NameServer failed\n");
-            System.exit(1);
-        }
-
-        // send look-up request for bank server to get the ip address and port
-        String bankAddr = lookUpServer("Bank");
-        bankPort = Integer.parseInt(bankAddr.split(";")[0]);
-        // send look-up request for content server to get the ip address and port
-        String contentAddr = lookUpServer("Content");
-        contentPort = Integer.parseInt(bankAddr.split(";")[0]);
-
-        // close the connection to name server
-        closeConn(connSocket, out, in);
+        // connect to server and send registration request
+        // prepare request message
+        String registrationMsg = "R;Store;" + storePort+";"+ipAddr;
+        contactServer(registrationMsg,ipAddr,nameServerPort);
+        // send look up request message
+        // Look up for Bank server
+        String bankAddr = contactServer("L;Bank",ipAddr,nameServerPort);
+        bankPort = Integer.parseInt(bankAddr.split(";")[0].trim());
+        // Look up for Content server
+        String contentAddr = contactServer("L;Content",ipAddr,nameServerPort);
+        contentPort = Integer.parseInt(contentAddr.split(";")[0].trim());
 
         // read contents from txt file and store the contents to a hash map
         readFile(fileName);
-
+        // connect to bank server
+        //contactServer(storeMsgSend,ipAddr,bankPort);
+        // connect to content server
+        //contactServer(storeMsgSend,ipAddr,contentPort);
+        //listenting for incoming connections
+        startListening(storePort);
     }
 
 
@@ -121,12 +117,6 @@ public class Store {
                             // check for the message validity on the server side
                             // and act accordingly
                             if (message.equals("0")) {
-//                                int n = 1;
-//                                Iterator<Map.Entry<String, String>> i = stocks.entrySet().iterator();
-//                                while(i.hasNext()){
-//                                    String id = i.next().getKey();
-//                                    reply = (String.valueOf(n) + id+ " "+stocks.get(key) + "\n");
-//                                    n++;
                                 for(int i = 0; i < stocksAL.size(); i++){
                                     reply = stocksAL.get(i) + "\n";
                                 }
@@ -216,11 +206,13 @@ public class Store {
                             } finally {
                                 buffer.flip();
                             }
-                            // finished reading, print to Client
+                           // finished reading, print to Client
                             if (readBytes > 0) {
                                 reply = Charset.forName("UTF-8").decode(buffer).toString();
                                 //System.out.println(Charset.forName("UTF-8").decode(buffer).toString());
                                 buffer = null;
+                                selector.close();
+                                break;
                             }
                         } finally {
                             if (buffer != null)
@@ -259,88 +251,6 @@ public class Store {
         }
     }
 
-
-    public void connectToServer(String request, String ipAddr, int port) {
-        SocketChannel channel = null;
-        String response = null;
-        try {
-            // open socket channel
-            channel = SocketChannel.open();
-            // set Blocking mode to non-blocking
-            channel.configureBlocking(false);
-            // set Server info
-            InetSocketAddress target = new InetSocketAddress(ipAddr, port);
-            // open the selector
-            selector = Selector.open();
-            // connect to Server
-            channel.connect(target);
-            // registers this channel with the given selector, returning a selection key
-            channel.register(selector, SelectionKey.OP_CONNECT);
-            while (selector.select() > 0) {
-
-                for (SelectionKey key : selector.selectedKeys()) {
-
-                    if (key.isConnectable()) {
-                        SocketChannel sc = (SocketChannel) key.channel();
-                        sc.register(selector, SelectionKey.OP_WRITE);
-                        sc.finishConnect();
-
-                    } else if (key.isReadable()) {
-
-                    } else if (key.isWritable()) {
-                        SocketChannel sc = (SocketChannel) key.channel();
-                        // send to Server
-                        channel.write(Charset.forName("UTF-8").encode(request));
-                        // set register status to READ
-                        sc.register(selector, SelectionKey.OP_READ);
-                    }
-
-                }
-
-                if (selector.isOpen()) {
-                    selector.selectedKeys().clear();
-                } else {
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Unable to connect to the server" + "\n");
-        } finally {
-            if (channel != null) {
-                try {
-                    channel.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-
-    private void closeConn(Socket connSocket, PrintWriter out, BufferedReader in)
-            throws IOException {
-        if (connSocket != null && out != null && in != null) {
-            out.close();
-            in.close();
-            connSocket.close();
-        }
-    }
-
-    private void connectToServer(String ip, int port) {
-        try {
-            connSocket = new Socket(ip, port);
-            out = new PrintWriter(connSocket.getOutputStream(), true);
-            in = new BufferedReader(
-                    new InputStreamReader(connSocket.getInputStream()));
-        } catch (ConnectException e) {
-            System.err.println("Unable to connect to name server located at port " + port);
-            System.exit(1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     private void readFile(String fileName) {
         BufferedReader br = null;
 
@@ -354,7 +264,6 @@ public class Store {
                 stocksAL.add(n, sCurrentLine);
                 n++;
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -365,31 +274,7 @@ public class Store {
                 ex.printStackTrace();
             }
         }
-
     }
-
-
-    private String lookUpServer(String name) {
-        String reply = null;
-        out.println("L;" + name);
-        try {
-            reply = in.readLine();
-            System.out.println(reply);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        if (reply.equals("error")) {
-            System.err.println(name + " has not registered\n");
-            System.exit(1);
-            return null;
-        } else {
-            return reply;
-        }
-
-    }
-
 
     public static void main(String[] args) throws IOException, NumberFormatException {
         System.out.println("Please specify store server port number, stock file name and name server port number\nIN THE FORMAT\n'Store Server Port number|Stock-file name|Name Server port number':");
