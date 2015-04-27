@@ -1,12 +1,8 @@
 import java.io.*;
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 
@@ -14,13 +10,7 @@ import java.nio.charset.Charset;
  * Created by RandyZhongbin on 4/25/2015.
  */
 public class Client {
-    private Selector selector = null;
-    private ServerSocketChannel serverSocketChannel = null;
-    private ServerSocket serverSocket = null;
-    private Socket connSocket = null;
     private String ipAddr = "127.0.0.1";
-    private PrintWriter out = null;
-    private BufferedReader in = null;
     int storePort = 0;
     boolean storeKnown = false;
     public Client(int request, int nameServerPort){
